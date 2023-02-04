@@ -1,2 +1,2 @@
-# makeharvard_2023
+# Dispraille
 Our braille display project for makeharvard 2023

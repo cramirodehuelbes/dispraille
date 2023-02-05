@@ -13,14 +13,14 @@ import RPi.GPIO as GPIO
 import re
 import pyserial
 
-vis = True
+vis = False
 
 # Pin Setup (pins are placeholders)
-VIBRATION_PIN = 5
+VIBRATION_PIN = 17 
 BUTTON_PIN = 3
-GPIO.setmode(GPIO.BOARD)
+GPIO.setmode(GPIO.BCM)
 GPIO.setup(VIBRATION_PIN, GPIO.OUT)
-GPIO.setmode(GPIO.BOARD)
+GPIO.setmode(GPIO.BCM)
 GPIO.setup(BUTTON_PIN, GPIO.IN, pull_up_down=GPIO.PUD_UP)
 
 # Serial Setup
@@ -88,7 +88,8 @@ def main():
                         cv2.putText(ocr, word, (x, y - 10), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 0, 255), 2)
 
             phrases.add(tuple(phrase))
-            output = build_output(orig, warped, ocr)
+            if vis:
+                output = build_output(orig, warped, ocr)
 
         if vis:
             if output is not None:
@@ -96,13 +97,13 @@ def main():
             else:
                 cv2.imshow("Output", orig)
 
-            try:
-                mode = Counter(phrases.items).most_common(1)[0]
-                print(mode[0])
-            except:
-                pass
+        try:
+            mode = Counter(phrases.items).most_common(1)[0]
+            print(mode)
+        except:
+            pass
 
-        if mode[1] > 30:
+        if mode[1] > 3:
             vibrate_on()
             if button_pressed():
                 vibrate_off()

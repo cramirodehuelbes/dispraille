@@ -55,6 +55,8 @@ Servo s6;
 int pos = 0; // variable to store the servo position
 String text; // variable to store the transmitted text
 int letter;  // variable to store the current letter being displayed
+int potPin = A0;   // select the input pin for the potentiometer
+
 
 byte BRAILLE[][6] = {{1}, {1,2}, {1,4}, {1,4,5}, {1,5}, {1,2,4}, {1,2,4,5}, {1,2,5}, {2,4}, 
   {2,4,5}, {1,3}, {1,2,3}, {1,3,4}, {1,3,4,5}, {1,3,5}, {1,2,3,4}, {1,2,3,4,5}, {1,2,3,5}, 
@@ -64,32 +66,50 @@ byte BRAILLE[][6] = {{1}, {1,2}, {1,4}, {1,4,5}, {1,5}, {1,2,4}, {1,2,4,5}, {1,2
 Servo motors[6] = {s1, s2, s3, s4, s5, s6};
 
 // servo params
-int start = 90;
-int end = 120;
+int starts[] = {136, 0, 73, 74, 30, 96};
+int ends[] = {118, 18, 55, 56, 48, 78};
 
 void setup() {
   s1.attach(3);  // attaches servo pins to servo objects
+  s1.write(starts[0]);
+  delay(15);
+
   s2.attach(5);
+  s2.write(starts[1]);
+  delay(15);
+
   s3.attach(6);
+  s3.write(starts[2]);
+  delay(15);
+
   s4.attach(9);
+  s4.write(starts[3]);
+  delay(15);
+
   s5.attach(10);
+  s5.write(starts[4]);
+  delay(15);
+
   s6.attach(11);
+  s6.write(starts[5]);
+  delay(15);
 
   Serial.begin(9600);
 }
 
 void loop() {
 
-  Serial.println("Waiting for text to translate");
+  // Serial.println("Waiting for text to translate");
 
   while (Serial.available() == 0) {
  }
 
   text = Serial.readString(); // Read incoming data as string 
   text.toLowerCase();
-  Serial.println(text); // Print data we just read as a check
+  // Serial.println(text); // Print data we just read as a check
 
-  for (int ind = 0; ind < sizeof(text)/sizeof(text[0]); ind += 1){
+  for (int ind = 0; ind < text.length(); ind += 1){
+    // Serial.println(text[ind]);
     int asciiVal = int(text[ind]);
     switch (asciiVal){
       case 97 ... 122:
@@ -108,15 +128,15 @@ void loop() {
 
     for (int i = 0; i <= sizeof(BRAILLE[letter]); i += 1) {
       // in steps of 1 degree
-      motors[BRAILLE[letter][i] - 1].write(end);  // // tell servo to yeet to end position
+      motors[BRAILLE[letter][i] - 1].write(ends[BRAILLE[letter][i] - 1]);  // // tell servo to yeet to end position
       delay(15);                                  // waits 15ms for the servo to reach the position
     }                                             //}
 
-    //    delay(2000);
+    delay(analogRead(potPin) * 1.5 + 500);
 
     for (int i = 0; i <= sizeof(BRAILLE[letter]); i += 1) {
       // in steps of 1 degree
-      motors[BRAILLE[letter][i] - 1].write(start);  // tell servo to yeet back to start position
+      motors[BRAILLE[letter][i] - 1].write(starts[BRAILLE[letter][i] - 1]);  // tell servo to yeet back to start position
       delay(15);                                    // waits 15ms for the servo to reach the position
     }   
   }    

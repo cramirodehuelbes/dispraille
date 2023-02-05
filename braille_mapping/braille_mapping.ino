@@ -85,7 +85,8 @@ void loop() {
   while (Serial.available() == 0) {
  }
 
-  text = Serial.readString().toLowerCase(); // Read incoming data as string (all lowercase)
+  text = Serial.readString(); // Read incoming data as string 
+  text.toLowerCase();
   Serial.println(text); // Print data we just read as a check
 
   for (int ind = 0; ind < sizeof(text)/sizeof(text[0]); ind += 1){
@@ -118,5 +119,7 @@ void loop() {
       motors[BRAILLE[letter][i] - 1].write(start);  // tell servo to yeet back to start position
       delay(15);                                    // waits 15ms for the servo to reach the position
     }   
-  }                                            
+  }    
+
+  Serial.println("DONE");                                        
 }

@@ -55,6 +55,8 @@ Servo s6;
 int pos = 0; // variable to store the servo position
 String text; // variable to store the transmitted text
 int letter;  // variable to store the current letter being displayed
+int potPin = A0;   // select the input pin for the potentiometer
+
 
 byte BRAILLE[][6] = {{1}, {1,2}, {1,4}, {1,4,5}, {1,5}, {1,2,4}, {1,2,4,5}, {1,2,5}, {2,4}, 
   {2,4,5}, {1,3}, {1,2,3}, {1,3,4}, {1,3,4,5}, {1,3,5}, {1,2,3,4}, {1,2,3,4,5}, {1,2,3,5}, 
@@ -97,17 +99,17 @@ void setup() {
 
 void loop() {
 
-  Serial.println("Waiting for text to translate");
+  // Serial.println("Waiting for text to translate");
 
   while (Serial.available() == 0) {
  }
 
   text = Serial.readString(); // Read incoming data as string 
   text.toLowerCase();
-  Serial.println(text); // Print data we just read as a check
+  // Serial.println(text); // Print data we just read as a check
 
   for (int ind = 0; ind < text.length(); ind += 1){
-    Serial.println(text[ind]);
+    // Serial.println(text[ind]);
     int asciiVal = int(text[ind]);
     switch (asciiVal){
       case 97 ... 122:
@@ -130,7 +132,7 @@ void loop() {
       delay(15);                                  // waits 15ms for the servo to reach the position
     }                                             //}
 
-    delay(2000);
+    delay(analogRead(potPin) * 1.5 + 500);
 
     for (int i = 0; i <= sizeof(BRAILLE[letter]); i += 1) {
       // in steps of 1 degree

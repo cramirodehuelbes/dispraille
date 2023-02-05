@@ -11,22 +11,26 @@ from cleantext import clean
 from collections import Counter
 import RPi.GPIO as GPIO
 import re
-import pyserial
+import serial
 
-vis = False
-
+vis = True
 # Pin Setup (pins are placeholders)
 VIBRATION_PIN = 17 
-BUTTON_PIN = 3
+BUTTON_PIN = 15
+GPIO.setwarnings(False)
+
 GPIO.setmode(GPIO.BCM)
 GPIO.setup(VIBRATION_PIN, GPIO.OUT)
-GPIO.setmode(GPIO.BCM)
-GPIO.setup(BUTTON_PIN, GPIO.IN, pull_up_down=GPIO.PUD_UP)
+GPIO.setup(BUTTON_PIN, GPIO.IN, pull_up_down=GPIO.PUD_DOWN)
 
 # Serial Setup
-SERIAL_PORT = '/dev/ttyACM0'
 SERIAL_RATE = 9600
-ser = serial.Serial(SERIAL_PORT, SERIAL_RATE)
+try:
+    ser = serial.Serial('/dev/ttyACM0', SERIAL_RATE, timeout=None)
+except Exception:
+    ser = serial.Serial('/dev/ttyACM1', SERIAL_RATE, timeout=None)
+    
+ser.reset_input_buffer()
 
 def main():
     video = cv2.VideoCapture(0)
@@ -46,7 +50,7 @@ def main():
         gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
 
         blurred = cv2.GaussianBlur(gray, (5, 5), 0)
-        edged = cv2.Canny(blurred, 30, 150)
+        edged = cv2.Canny(blurred, 20, 100)
         cnts = cv2.findContours(edged.copy(), cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
         cnts = imutils.grab_contours(cnts)
         cnts = sorted(cnts, key=cv2.contourArea, reverse=True)[:5]
@@ -100,22 +104,24 @@ def main():
         try:
             mode = Counter(phrases.items).most_common(1)[0]
             print(mode)
+            if mode[1] > 3 and len(mode[0]) > 3:
+                vibrate_on()
+                if button_pressed():
+                    print('button pressed')
+                    vibrate_off()
+                    transmit(mode[0])
+            else:
+                vibrate_off()
+                
         except:
             pass
 
-        if mode[1] > 3:
-            vibrate_on()
-            if button_pressed():
-                vibrate_off()
-                transmit(mode[0])
-        else:
-            vibrate_off()
-
-        time.sleep(1/30 - ((time.time() - starttime) % 1/30))
+        time.sleep(1/2 - ((time.time() - starttime) % 1/2))
             
 
     video.release()
     cv2.destroyAllWindows()
+    ser.close()
 
 def build_output(frame, warped, ocr):
     frameH, frameW = frame.shape[:2]
@@ -141,7 +147,7 @@ def build_output(frame, warped, ocr):
         output[frameH + cardH:frameH+cardH+ocrH, 0:ocrW] = ocr
     
     return output
-
+    
 class LRUList:
     def __init__(self, max_size):
         self.items = []
@@ -154,27 +160,34 @@ class LRUList:
 
 def vibrate_on():
     GPIO.output(VIBRATION_PIN, GPIO.HIGH)
+    print('vibe on')
 
 def vibrate_off():
     GPIO.output(VIBRATION_PIN, GPIO.LOW)
-
+    print('vibe off')
+    
 def button_pressed():
-    return GPIO.input(BUTTON_PIN)
+    print(GPIO.input(BUTTON_PIN))
+    return GPIO.input(BUTTON_PIN) == 1
 
 def transmit(phrase):
+    print('transmit')
     phrase = [p for p in phrase if p != '']
     phrase = " ".join(phrase)
     phrase = re.sub(r'(\d+)', r'#\1', phrase)
-    ser.write(phrase)
+    print(phrase)
+    ser.write(phrase.encode('utf-8'))
+    ser.flushInput()
+    print(phrase)
 
-    while True:
-        line = ser.readline()
-        if line == 'DONE':
-            break
-
-    vibrate_on()
-    time.sleep(0.5)
-    vibrate_off()
+    while ser.inWaiting() == 0:
+        pass
+    
+    if ser.inWaiting() > 0:
+        print(ser.readline())
+        vibrate_on()
+        time.sleep(0.5)
+        vibrate_off()
 
 if __name__ == "__main__":
     main()

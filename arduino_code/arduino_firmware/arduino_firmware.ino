@@ -66,8 +66,8 @@ byte BRAILLE[][6] = {{1}, {1,2}, {1,4}, {1,4,5}, {1,5}, {1,2,4}, {1,2,4,5}, {1,2
 Servo motors[6] = {s1, s2, s3, s4, s5, s6};
 
 // servo params
-int starts[] = {136, 0, 73, 74, 30, 96};
-int ends[] = {118, 18, 55, 56, 48, 78};
+int starts[] = {92, 3, 64, 71, 65, 87};
+int ends[] = {74, 21, 46, 53, 83, 69};
 
 void setup() {
   s1.attach(3);  // attaches servo pins to servo objects
@@ -98,7 +98,23 @@ void setup() {
 }
 
 void loop() {
+  s1.write(starts[0]);
+  delay(15);
 
+  s2.write(starts[1]);
+  delay(15);
+
+  s3.write(starts[2]);
+  delay(15);
+
+  s4.write(starts[3]);
+  delay(15);
+
+  s5.write(starts[4]);
+  delay(15);
+
+  s6.write(starts[5]);
+  delay(15);
   // Serial.println("Waiting for text to translate");
 
   while (Serial.available() == 0) {
